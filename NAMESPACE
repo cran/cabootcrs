@@ -1,0 +1,17 @@
+import(methods)
+#importFrom("graphics",plot)
+exportPattern("^[[:alpha:]]+")
+exportClasses(
+ "cabasicresults",
+ "cabootcrsresults"
+)
+#export(
+# "plot.cabootcrsresults",
+# "summary.cabootcrsresults",
+# "print.cabootcrsresults"
+#)
+#exportMethods(
+# "plot",
+# "summary",
+# "print"
+#)
