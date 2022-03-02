@@ -16,6 +16,8 @@
 #'
 #' @param p Number of variables, only needed if catype="mca"
 #'
+#' @param needtrans TRUE if rows < columns so need to transpose in the routine
+#'
 #' @return An object of class \code{\linkS4class{cabasicresults}}
 #'
 #' @examples
@@ -24,7 +26,7 @@
 #' @seealso \code{\link{cabootcrs-package}}, \code{\link{cabootcrs}}, \code{\linkS4class{cabasicresults}}
 #'
 #' @export
-sca <- function(X,catype="sca",mcatype=NULL,p=2) {
+sca <- function(X,catype="sca",mcatype=NULL,p=2,needtrans=FALSE) {
 
 # Performs simple CA of a matrix X with rows >= cols
 
@@ -38,6 +40,9 @@ sca <- function(X,catype="sca",mcatype=NULL,p=2) {
 # r = rank
 # mu = mu
 
+if (needtrans) {
+  X <- t(X)
+}
 X <- X/sum(X)
 
 rmax <- min(dim(X))-1
@@ -85,9 +90,15 @@ if (catype=="sca") {
   }
 }
 
-sca <- new("cabasicresults",
+if (needtrans) {
+  sca <- new("cabasicresults",
+             Rprofile=C,Cprofile=R,Rweights=Cweights,Cweights=Rweights,
+             Raxes=Caxes,Caxes=Raxes,r=r,realr=realr,mu=mu)
+} else {
+  sca <- new("cabasicresults",
           Rprofile=R,Cprofile=C,Rweights=Rweights,Cweights=Cweights,
           Raxes=Raxes,Caxes=Caxes,r=r,realr=realr,mu=mu)
+}
 
 }
 

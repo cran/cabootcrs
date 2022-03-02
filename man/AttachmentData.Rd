@@ -4,11 +4,13 @@
 \name{AttachmentData}
 \alias{AttachmentData}
 \title{van Ijzendoorn's attachment data}
-\format{A contingency table with 4 rows and 4 columns
+\format{
+A contingency table with 4 rows and 4 columns
 \describe{
   \item{rows}{Infant response: Avoidant, Secure, Resistant, Disorganised}
   \item{columns}{Mother's Classification: Dismissing, Autonomous, Preoccupied, Unresolved}
-}}
+}
+}
 \source{
 E.J. Beh,
 \emph{Elliptical confidence regions for simple correspondence analysis},

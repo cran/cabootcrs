@@ -4,12 +4,14 @@
 \name{DreamData223by3}
 \alias{DreamData223by3}
 \title{Maxwell's dream data set with added totally random column}
-\format{A matrix of 223 individuals by 3 variables
+\format{
+A matrix of 223 individuals by 3 variables
 \describe{
   \item{Age group - R}{5-7 (A), 8-9 (B), 10-11 (C), 12-13 (D), 13-14 (E)}
   \item{Severity of disturbance of dream - C}{Severity of disturbance of dream: lowest (a) to highest (d)}
   \item{Random fake variable - V}{1 to 3}
-}}
+}
+}
 \source{
 Adapted from G. Iliopoulos, M. Kateri and I. Ntzoufras,
 \emph{Bayesian estimation of unrestricted and order-restricted association

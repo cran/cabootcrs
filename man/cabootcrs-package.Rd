@@ -11,13 +11,13 @@ around the projected coordinates for the category points.
 Includes additional routines for summarising the output and for
 plotting the results in a variety of ways, including both french and biplot styles.
 
-Performs multiple correspondence analysis (homogeneity analysis) 
-of a Burt matrix (a matrix of two-way contingency tables for p variables) 
+Performs multiple correspondence analysis (homogeneity analysis)
+of a Burt matrix (a matrix of two-way contingency tables for p variables)
 and produces bootstrap-based confidence regions
 around the projected coordinates for the variable category points.
-This includes a new method to correct the confidence regions 
+This includes a new method to correct the confidence regions
 for the well-known distortion of the results
-caused by the diagonal of the Burt matrix. 
+caused by the diagonal of the Burt matrix.
 Also contains a highly experimental method to produce confidence regions
 when analysing an indicator matrix.
 }
@@ -25,10 +25,10 @@ when analysing an indicator matrix.
 \tabular{ll}{
 Package: \tab cabootcrs\cr
 Type: \tab Package\cr
-Version: \tab 2.0.0\cr
-Date: \tab 2019-12-05\cr
+Version: \tab 2.1.0\cr
+Date: \tab 2022-02-03\cr
 License: \tab GPL-3\cr
-Depends: \tab lpSolve \cr
+Depends: \tab lpSolve, colorspace \cr
 }
 \strong{Simple Correspondence Analysis:}
 
@@ -78,17 +78,17 @@ but with the above plotting options available.
 
 The package can also be used just to produce the covariance matrices for each
 of the category points, which for example can then be used with ellipse() to add
-confidence ellipses to results from the ca() routine in the ca package.
+confidence ellipses to results from the ca() and mjca() (below) routines in the ca package.
 
 
 \strong{Multiple Correspondence Analysis:}
 
-The same principles as above carry over to the Multiple Correspondence Analysis 
+The same principles as above carry over to the Multiple Correspondence Analysis
 case with p categorical variables.
 
 The recommended approach is to bootstrap the indicator matrix
 and then apply MCA to the derived Burt matrix.
-A new method is provided in the variance calculations to correct for the 
+A new method is provided in the variance calculations to correct for the
 well-known problems induced by the diagonal of the Burt matrix.
 
 Standard options for correcting inertias and coordinates are also given.
@@ -106,34 +106,48 @@ but the procedure is highly experimental and very slow.
 
 The data set can be input in numerous formats, and routines are provided
 to convert between them. However note that the data cannot be inputted as
-a Burt matrix because this loses some of the information in the data. 
+a Burt matrix because this loses some of the information in the data.
 
 \strong{Changes from Version 1.0:}
 
 Multiple correspondence analysis routines added.
 
 Hungarian algorithm added for axis rearranging, to replace the embarrassingly poor
-method used previously. 
+method used previously.
 
-Bootstrap critical values added, and are now the default. 
+Bootstrap critical values added, and are now the default.
 
 Numerous fairly minor changes made to existing simple correspondence analysis routines.
+
+New routines to convert data between different formats.
 
 There may be a little backwards incompatibility as some options to the routines
 have changed a bit, but standard use with few options will still work.
 Any changes should produce easily fixable failures to run.
 
+\strong{Changes from Version 2.0:}
 
+Debugging, including for plotca to call dev.new() when in R but not Rstudio,
+and option to call it from Rstudio.
+
+New routines to reflect axes and reorder categories,
+e.g. for when using results with other packages.
+
+New routine to add supplementary points to plots.
+
+More options and examples for plotting.
 
 \strong{Final Notes:}
 
 The package does not use any routines from any of the
 other Correspondence Analysis packages, only base R routines.
 This was deliberate, in order to maintain control over the precise details.
-The only external routine used is lp.assign, from the lpSolve package, for the Hungarian algorithm.
+The only external routines used are lp.assign, from the lpSolve package, for the Hungarian algorithm,
+and some hcl functions from the colo(u)rspace package for plotting.
 
 The results can be used as input to other packages, such as using ellipse()
-to draw the ellipses on a plot from ca(), see \code{\link{covmat}} for this.
+to draw the ellipses on a plot from ca(), see \code{\link{covmat}}
+and \code{\link{plotca}} for this.
 
 }
 \author{
@@ -164,6 +178,8 @@ A paper on the application to MCA is in preparation.
 \code{\link[cabootcrs]{covmat}} ,
 \code{\link[cabootcrs]{allvarscovs}} ,
 \code{\link[cabootcrs]{reflectaxes}} ,
+\code{\link[cabootcrs]{reordercategories}} ,
+\code{\link[cabootcrs]{addsupplementary}} ,
 \code{\link[cabootcrs]{sca}} ,
 \code{\link[cabootcrs]{rearrange}} ,
 \code{\linkS4class{cabootcrsresults}} ,
@@ -223,7 +239,7 @@ allvarscovs(bd, "columns")
 ddnbyp <- convert(DreamData,input="CT",output="nbyp")$result
 
 # Perform multiple correspondence analysis with all defaults:
-# non-parametric resampling, analyse Burt matrix, correct for 
+# non-parametric resampling, analyse Burt matrix, correct for
 # the Burt diagonal in the inertias, coordinates and bootstrapping.
 # Note that the coordinates, inertias etc are identical to those
 # from simple CA above, while the standard deviations and hence

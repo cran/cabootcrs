@@ -16,6 +16,8 @@ The meanings and possible values for the settings are described in \code{\link{c
 \describe{
 \item{\code{br}}{The basic results from CA, class \code{\linkS4class{cabasicresults}}}
 
+\item{\code{datasetname}}{Name of the data set for printing, class \code{"character"}}
+
 \item{\code{DataMatrix}}{The sample data matrix, class \code{"matrix"}}
 
 \item{\code{rows}}{Number of rows, class \code{"numeric"}}
@@ -56,6 +58,10 @@ The meanings and possible values for the settings are described in \code{\link{c
 
 \item{\code{inertias}}{Axis inertias, class \code{"matrix"}}
 
+\item{\code{rowmasses}}{Masses of row points, class \code{"numeric"}}
+
+\item{\code{colmasses}}{Masses of column points, class \code{"numeric"}}
+
 \item{\code{nboots}}{Number of bootstrap replicates used to calculate the (co)variances, class \code{"numeric"}. \cr
 If nboots=0 then standard CA or MCA is performed with no confidence regions produced.}
 
@@ -85,7 +91,7 @@ If nboots=0 then standard CA or MCA is performed with no confidence regions prod
 
 \item{\code{mcaindividualboot}}{Whether the experimental method to bootstrap an indicator or doubled matrix was used, class \code{"logical"}}
 
-\item{\code{IndicatorMatrix}}{The indicator matrix dervied from the data matrix, class \code{"matrix"}}
+\item{\code{IndicatorMatrix}}{The indicator matrix derived from the data matrix, class \code{"matrix"}}
 
 \item{\code{Jk}}{The number of classes for each variable, class \code{"numeric"}}
 

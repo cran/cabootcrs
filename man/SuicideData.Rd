@@ -4,12 +4,14 @@
 \name{SuicideData}
 \alias{SuicideData}
 \title{Suicide data}
-\format{A contingency table with 34 rows and 9 columns
+\format{
+A contingency table with 34 rows and 9 columns
 \describe{
   \item{rows}{Gender and age of individual: Females aged 10-15 (F10) to males aged 90+ (M90)}
-  \item{columns}{Method: drugs/poison (Mat), gas at home (Gas.h), gas-others (Gas.o), hanging (Hang), 
-                 drowning (Drown), gunshot (Gun), stabbing (Stab), jumping (Jump), Other} 
-}}
+  \item{columns}{Method: drugs/poison (Mat), gas at home (Gas.h), gas-others (Gas.o), hanging (Hang),
+                 drowning (Drown), gunshot (Gun), stabbing (Stab), jumping (Jump), Other}
+}
+}
 \source{
 Nishisato, S. (1994).
 \emph{Elements of Dual Scaling: An Introduction to Practical Data Analysis}.

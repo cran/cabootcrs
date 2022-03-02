@@ -6,10 +6,11 @@
 \usage{
 plotca(
   x,
-  datasetname = "",
+  datasetname = NULL,
+  mytitles = NULL,
   showrowlabels = TRUE,
   showcolumnlabels = TRUE,
-  plotsymbolscolours = c(19, "alldifferent", 18, "alldifferent"),
+  plotsymbolscolours = c(19, "inferno", 18, "inferno"),
   othersmonochrome = "grey",
   crpercent = 95,
   usebootcrits = NULL,
@@ -27,47 +28,83 @@ plotca(
   mcacategorycolours = FALSE,
   groupings = NULL,
   grouplabels = NULL,
-  eps = 1e-15
+  eps = 1e-15,
+  plotwithdevnew = FALSE
 )
 }
 \arguments{
 \item{x}{An object of class \code{\linkS4class{cabootcrsresults}}}
 
-\item{datasetname}{A string to use as the name of the data set in the plots}
+\item{datasetname}{A string to use as the name of the data set in the plots, defaults to that in cabootcrs object}
+
+\item{mytitles}{A list of text strings, to be used instead of the default titles of the plots,
+where the list must be at least as long as the number of plots to be produced}
 
 \item{showrowlabels}{If TRUE then label row points as usual, otherwise
 suppress labels of row points.
 
-Note: when analysing a Burt matrix the columns points are used}
+Note: when analysing a Burt matrix the columns points are plotted}
 
 \item{showcolumnlabels}{If TRUE then label column points as usual, otherwise
 suppress labels of column points.
 
 Note: when analysing a Burt matrix the columns points are plotted}
 
-\item{plotsymbolscolours}{A vector/list of length 1, 2 or 4.
+\item{plotsymbolscolours}{A vector/list of length 1, 2, 4 or equal to the number of category points to be plotted.
 
-If length 4 then it takes the form:
+(a) If longer than length 4 then it contains the colours for all the points, their ellipses and labels.
 
-c(row symbol,"row colour", column symbol,"column colour")
+Taken to be a vector or list of valid R colours, length at least equal to the number of category points to be plotted,
+in the order rows followed by columns for sca or variable categories in order for mca.
+The colours can be named (e.g. "azure2") or RGB hexadecimal (e.g. "#1173B3"),
+and can be subsetted from colours() or from the colo(u)rspace library's palettes.
 
-giving plot symbols and colours for row and column points and ellipses
-when they are the primary points.
+(b) If length 4 then it takes the form:
+
+c(row symbol, "row colour", column symbol, "column colour")
+
+giving plot symbols and colours for row and column points and ellipses when they are the primary points.
 \describe{
 \item{First element:}{The plot symbol for row points - either an R number code (usually 0-25), or a character (in " ")}
-\item{Second element:}{The colour for row points, their ellipses and labels - either a valid R colour (in " ")  or \cr
-"differentreds" - each row is plotted with a different shade of red to green \cr
-"differentblues" - each row is plotted with a different shade of green to blue \cr
-"alldifferent" - each row is plotted with a different colour, going through the R colour list
- with the first few rows as reds and the last few rows as blues}
+\item{Second element:}{The colour for row points, their ellipses and labels - either a valid R colour name (in " ")  or \cr
+"differentreds" - each row is plotted with a different shade of red to green, using the grDevices rainbow palette \cr
+"differentblues" - each row is plotted with a different shade of green to blue, using the grDevices rainbow palette \cr
+"alldifferent" - each row is plotted with a different colour, using the grDevices rainbow palette from reds to blues\cr
+"viridis" - each row is plotted with a different colour, using the grDevices viridis palette\cr
+"inferno" - each row is plotted with a different colour, using the grDevices inferno palette, though not the extremes of it}
 \item{Third element:}{As first element but for column points}
 \item{Fourth element:}{As second element but for column points}
 }
-If length 2 then these are assumed to be the symbol and colour(s) for columns only.
 
-If length 1 then this is assumed to be the colour(s) for columns only.
+(c1) If length 2 and the first element is a valid colour choice as above then it takes the form:
 
-Note: colour can also be specified as colours()[i] which picks out the i-th colour
+c("row colour", "column colour")
+
+giving colours for row and column points and ellipses when they are the primary points.
+\describe{
+\item{First element:}{The colour for row points, choices as second element above}
+\item{Second element:}{The colour for column points, choices as second element above}
+}
+
+(c2) If length 2 and the first element is *not* a valid colour choice as above then it takes the form:
+
+c(column symbol, "column colour")
+
+giving plot symbols and colours for column points and ellipses when they are the primary points.
+\describe{
+\item{First element:}{The plot symbol for column points, choices as first element above}
+\item{Second element:}{The colour for column points, choices as second element above}
+}
+
+(d) If length 1 then it takes the form:
+
+"column colour"
+
+giving colours for column points and ellipses when they are the primary points, choices as second element above.
+
+Note: colour can also be specified as colours()[i] which picks out the i-th colour.
+
+Note: when analysing a Burt matrix the columns points are plotted.
 
 The idea behind "alldifferent" etc is that the colours change gradually, so that if the order of the rows/columns is
 meaningful then the colour change tracks this.
@@ -159,19 +196,20 @@ If picsize is used to focus in on a particular area
 of the plot then biplot labels might not appear properly.
 
 If using Rstudio then it may override this somewhat, especially if you resize the plot window
-after plotting.}
+after plotting.
 
-\item{mcaoneploteach}{For MCA only, a flag saying whether to produce one plot for each variable,
+If Rstudio has too much of a mind of its own when plotting then try plotwithdevnew=TRUE to
+put each plot in a new window, as in standard R.}
+
+\item{mcaoneploteach}{For MCA only, a flag or list of column numbers saying whether to produce one plot for each variable,
 where confidence ellipses are shown for that variable but not others:
 \describe{
 \item{TRUE}{p plots are produced, each showing confidence regions for all of the category points
 for just one variable, overriding showcolumncrs}
+\item{number or vector of numbers}{produce one plot for each of the specified variable numbers, as above}
 \item{FALSE}{only one plot is produced, with confidence regions shown for each category
 point of each variable, although this can be controlled by showcolumncrs}
-}
-Note that mcaoneploteach=FALSE can be used to produce just one plot with ellipses for just one variable,
-with showcolumncrs used to specify the column numbers of the required variable categories
-(e.g. 1:5 for the first variable if it has 5 categories)}
+}}
 
 \item{mcashowindividuals}{For MCA on an indicator matrix only, a flag saying whether to
 plot the individuals on the plot(s):
@@ -185,9 +223,11 @@ plot the individuals on the plot(s):
 points and ellipses for that variable have the same colour}
 \item{FALSE}{Colours chosen in the default way}
 }
-If TRUE then the only colour options for plotsymbolscolours are "alldifferent" (default), "differentreds" or "differentblues" as above. \cr
+If TRUE then the only valid colour options for plotsymbolscolours are "viridis", "inferno", "alldifferent", "differentreds" or "differentblues" as above. \cr
 Hence if TRUE then colours vary from variable 1 to variable p with each variable having all its categories
-plotted with the same colour, while if FALSE then colours vary from variable 1 category 1 to variable p category J_p.}
+plotted with the same colour, while if FALSE then colours vary from variable 1 category 1 to variable p category J_p.
+
+Note: if plotsymbolscolours has length > 4, and so is specifying a colour for each category, then it overrides this.}
 
 \item{mcacategorycolours}{\describe{
 \item{TRUE}{In MCA each category number has its own colour,
@@ -196,9 +236,11 @@ for all variables (intended for Likert type data so that all category 1 points a
 the same colour etc)}
 \item{FALSE}{Colours chosen in the default way}
 }
-If TRUE then the only colour options for plotsymbolscolours are "alldifferent" (default), "differentreds" or "differentblues" as above. \cr
+If TRUE then the only valid colour options for plotsymbolscolours are "viridis", "inferno", "alldifferent", "differentreds" or "differentblues" as above. \cr
 Hence if TRUE then colours vary from category 1 to category J_k with category i being the same colour for each variable,
-while if FALSE then colours vary from variable 1 category 1 to variable p category J_p.}
+while if FALSE then colours vary from variable 1 category 1 to variable p category J_p.
+
+Note: if plotsymbolscolours has length > 4, and so is specifying a colour for each category, then it overrides this.}
 
 \item{groupings}{The name of a file (in " ") or data frame containing group structure of row and column points:
 
@@ -254,6 +296,13 @@ to emphasize any group structure within the data, or to show only the
 most important ellipses in order to make the picture less cluttered.}
 
 \item{eps}{Any value less than this is treated as zero in some calculations and comparisons}
+
+\item{plotwithdevnew}{When using Rstudio, a flag saying whether to put each
+plot in a new device (plot window) or just use the default Rstudio plot pane:
+\describe{
+\item{TRUE}{Each plot gets its own new plot window, as in standard R outside Rstudio}
+\item{FALSE}{All plots appear squashed into the usual Rstudio plot pane}
+}}
 }
 \value{
 One or more plots are produced but no output object is created
@@ -330,6 +379,12 @@ The default is for each primary point to be in a different colour,
 with secondary points in the colour defined by othersmonochrome (default grey).
 If othersmonochrome=NULL then secondary points are also plotted with different colours.
 
+The plotsymbolscolours option can be used to specify quickly the set of symbols and colours used,
+with the options described in (5) below giving far more control at the cost of extra work.
+
+The default colour scheme is grDevices:inferno, but with k+2 colours picked and then 2:k+1 used,
+because the end colour is a bit too yellow and hard to see.
+
 Note that french-style plots in simple CA
 are often less cluttered because they omit the biplot lines,
 while they also show the two sets of points on similar scales
@@ -368,6 +423,7 @@ These data frames define the same groupings and colours as the files below,
 see the files for a clearer explanation:
 
 \preformatted{
+bd <- cabootcrs(DreamData)
 groupingsframe <- cbind(c(1:5,1:4),c(1,1,2,2,3,1,1,2,2))
 grouplabframe <- cbind( c(1,2,3,1,2), c("AB","CD","E","ab","cd"), c(19,20,21,"+","*"), c("green","blue","yellow","red","orange"), "T" )
 plotca(bd, groupings=groupingsframe, grouplabels=grouplabframe)
@@ -410,24 +466,31 @@ DreamGroupLabels.txt contains
 
 e.g. group-of-rows 1 will be shown in green and plotted with symbol 19, with the legend AB.
 
+\preformatted{
+bd <- cabootcrs(DreamData, showresults=FALSE)
 plotca(bd, groupings="DreamGroupings.txt", grouplabels="DreamGroupLabels.txt")
+}
 
 \strong{(5c) General use}
 
 Even without groupings this can be used to specify all colours, simply by specifying each point as its own group,
 in this case rows 1-5 and columns 1-4 define row groups 1-5 and column groups 1-4, no legend is required so repeat "",
-choose 9 plot symbols and 9 colours.\cr
-Hence to plot each point with its own colour and symbol:
+choose 9 plot symbols and 9 colours.
+
+Hence to plot each point with its own specified colour and symbol:
 
 \preformatted{
+bd <- cabootcrs(DreamData, showresults=FALSE)
 groupingsframe <- cbind(c(1:5,1:4),c(1:5,1:4))
 grouplabframe <- cbind( c(1:5,1:4), rep("",9), 11:19, c("green","blue","yellow","red","orange","grey1","grey22","grey44","grey66"), "T" )
 plotca(bd, groupings=groupingsframe, grouplabels=grouplabframe)
 }
 
+Note: plotsymbolscolours can be used to plot with a different colour for each category point, but with default symbols.
+
 \strong{(5d) MCA use}
 
-As before, but need to specify for both row and column categories even though only row categories will be plotted,
+As before, but need to specify for both row and column categories even though only column categories will be plotted,
 so just duplicate the data frames (yes I know it's a bodge). \cr
 Hence to plot each point with your own choice of colour and symbol:
 
@@ -440,7 +503,25 @@ grouplabframe <- rbind(grouplabframe,grouplabframe)
 plotca(bd3, groupings=groupingsframe, grouplabels=grouplabframe)
 }
 
-This can also be used to plot the individual points with colours to denote groups, for example
+This can also be used to specify colours and symbols for each variable in MCA, but note that you are still specifying for each column point,
+so that you need to know how many categories each variable has - a simpler way to do this will be added to a later update.
+
+\preformatted{
+ost <- cabootcrs(OsteoDataNames, catype="mca", varandcat=FALSE)
+totcolumns <- ost@columns
+totvars <- ost@p
+numcats <- ost@Jk
+cats <- NULL
+for (i in 1:totvars) { cats <- c(cats,rep(i,numcats[i])) }
+groupingsframe <- cbind(1:totcolumns,cats)
+groupingsframe <- rbind(groupingsframe,groupingsframe)
+grouplabframe <- cbind( 1:totvars, rep("",totvars), rep(19,totvars), c("blue","red","green","darkgreen","green3","black","grey1","coral1","coral2","coral3","navy"), "T" )
+grouplabframe <- rbind(grouplabframe,grouplabframe)
+plotca(ost, groupings=groupingsframe, grouplabels=grouplabframe)
+}
+
+This can also be used to plot the individual points with colours to denote groups, for example in the below
+the first 100 individual points are plotted with one colour, the rest with another, while all columns get their own colour.
 
 \preformatted{
 bd3indnoboot <- cabootcrs(DreamData223by3,catype="mca",mcatype="indicator",varandcat=FALSE,nboots=0)
@@ -486,12 +567,13 @@ simply in order to avoid complication and unintended consequences within R
 \examples{
 # the main function also calls plotca with the default options
 
-bd <- cabootcrs(DreamData,showresults=FALSE)
+bd <- cabootcrs(DreamDataNames, datasetname="Maxwell's dream data",
+                varnames=c("Age groups","Severity of disturbance"),showresults=FALSE)
 plotca(bd)
 
 \dontrun{
 
-# Plot options for SCA:
+### Plot options for SCA:
 
 # Note that Rstudio changes plots depending on the size of your plot window,
 # so the picsize parameter (used for xlim, ylim in the plot command) is partially
@@ -505,21 +587,43 @@ plotca(bd, picsize=c(-2.5,2.5))
 
 plotca(bd, picsize=c(-0.5,0.5))
 
+# Replacing the plot titles with your own
+
+plotca(bd, mytitles=c("Plot 1 Title line 1\nline 2\nline 3","Plot 2 Title line 1\nline 2\nline 3" ))
+
 # All points in colour
 
 plotca(bd,othersmonochrome=NULL)
 
-# 90\% regions with different colour schemes
+# 90\% regions in reds and blue
 
 plotca(bd, plotsymbolscolours=c(3,"differentreds","*","blue"), crpercent=90)
-plotca(bd, plotsymbolscolours=c(3,"differentreds"), crpercent=90)
-plotca(bd, plotsymbolscolours="differentreds", crpercent=90)
-plotca(bd, plotsymbolscolours=colours()[641], crpercent=90)
+
+# Many different colour schemes and ways of specifying colours and symbols
+
+# Specify colour/colour scheme and symbols
+plotca(bd, plotsymbolscolours=c(3,"differentreds","*","blue") )
+plotca(bd, plotsymbolscolours=c(3,"viridis") )
+plotca(bd, plotsymbolscolours="inferno" )
+plotca(bd, plotsymbolscolours=colours()[641] )
+
+# Just give a list of colours, one for each category point
+plotca(bd,
+plotsymbolscolours=c("green","blue","yellow","red","orange","red","blue","tan1","orchid4") )
+plotca(bd, plotsymbolscolours=colours()[161:170] )
+plotca(bd, plotsymbolscolours=colours()[c(111:115,561:564)] )
+
+# This time using colo(u)rspace package colour palettes
+library(colorspace)
+plotca(bd, plotsymbolscolours=hcl.colors(9,palette="Peach") )
+plotca(bd, plotsymbolscolours=hcl.colors(50,palette="Mint")[c(11:15,31:34)] )
+plotca(bd,
+plotsymbolscolours=c(sequential_hcl(bd@rows,"Blues 3"),sequential_hcl(bd@columns,"Reds 3")) )
 
 # suppress labels for column points, to de-clutter row points picture,
 # this is mostly useful for larger data sets than this one
 
-plotca(bd, showcolumnlabels=FALSE, datasetname="Dream data")
+plotca(bd, showcolumnlabels=FALSE)
 
 # only show ellipses for rows 1, 1-2 and 1-3 respectively
 
@@ -543,7 +647,7 @@ bs <- cabootcrs(SuicideData)
 plotca(bs, picsize=c(-0.7,0.8))
 plotca(bs, plottype="french", picsize=c(-0.7,0.8))
 plotca(bs, plottype="french", picsize=c(-0.7,0.8),
-       plotsymbolscolours=c(".","differentreds","+","black"))
+           plotsymbolscolours=c(".","inferno","+","black"))
 
 # Note that the ellipses follow the horseshoe
 
@@ -556,12 +660,11 @@ grouplabframe <- cbind( c(1,2,3,1,2), c("AB","CD","E","ab","cd"), c(19,20,21,"+"
                         c("green","blue","yellow","red","orange"), "T" )
 plotca(bd, groupings=groupingsframe, grouplabels=grouplabframe)
 
-
 plotca(bd, groupings=groupingsframe, grouplabels=grouplabframe, plottype="french")
 
 # This can also be used for custom colour schemes other than "differentreds" etc as
-# defined in the plotsymbolscolours option, though note that R colours are not ordered in the way
-# you might expect, so the colour scheme below is purely illustrative and not very sensible
+# defined in the plotsymbolscolours option, though note that R colours are not ordered in the
+# way you might expect, so the colour scheme below is purely illustrative and not very sensible
 
 customframe <- cbind( c(1:5,1:4), c(1:5,1:4) )
 customlabframe <- cbind( c(1:5,1:4), rep("",9), c(rep(18,5),rep(19,4)),
@@ -570,32 +673,42 @@ customlabframe <- cbind( c(1:5,1:4), rep("",9), c(rep(18,5),rep(19,4)),
 plotca(bd, groupings=customframe, grouplabels=customlabframe)
 
 
-# Plot options for MCA:
+### Plot options for MCA:
 
 # Use one of the below, labelling row A as R:A or just A (etc) as preferred
 
-bd3 <- cabootcrs(DreamData223by3, catype="mca")
-bd3 <- cabootcrs(DreamData223by3, catype="mca", varandcat=FALSE)
+bd3 <- cabootcrs(DreamData223by3, catype="mca",
+                 datasetname="Dream data with extra random column")
+bd3 <- cabootcrs(DreamData223by3, catype="mca", varandcat=FALSE,
+                 datasetname="Dream data with extra random column")
+
+# just variable 2
+
+plotca(bd3,mcaoneploteach=2)
+
+# just variables 1 and 3
+
+plotca(bd3,mcaoneploteach=c(1,3))
 
 # one plot showing CRs for all variable categories (busy)
 
-plotca(bd3,mcaoneploteach=FALSE,picsize=c(-0.35,0.35))
+plotca(bd3,mcaoneploteach=FALSE)
 
 # each variable has its own colour
 
-plotca(bd3,mcavariablecolours=TRUE,picsize=c(-0.35,0.35))
+plotca(bd3,mcavariablecolours=TRUE)
 
 # each category number has its own colour
 
-plotca(bd3,mcacategorycolours=TRUE,picsize=c(-0.35,0.35))
+plotca(bd3,mcacategorycolours=TRUE)
 
 # draw arrows between successive ordered categories
 
-plotca(bd3,likertarrows=TRUE,picsize=c(-0.35,0.35))
+plotca(bd3,likertarrows=TRUE)
 
 # secondary points black rather than grey
 
-plotca(bd3,othersmonochrome="black",picsize=c(-0.35,0.35))
+plotca(bd3,othersmonochrome="black")
 
 # 99\% CRs
 
@@ -603,28 +716,28 @@ plotca(bd3,crpercent=99)
 
 # Plot together CRs for the first category of each variable
 
-plotca(bd3,showcolumncrs=c(1,6,10),mcaoneploteach=FALSE,picsize=c(-0.35,0.35))
+plotca(bd3,showcolumncrs=c(1,6,10),mcaoneploteach=FALSE)
 
 # Plot together CRs for the second category of each variable
 
-plotca(bd3,showcolumncrs=c(2,7,11),mcaoneploteach=FALSE,picsize=c(-0.35,0.35))
+plotca(bd3,showcolumncrs=c(2,7,11),mcaoneploteach=FALSE)
 
 # One plot with CRs only for variable 3
 
-plotca(bd3,showcolumncrs=10:12,mcaoneploteach=FALSE,picsize=c(-0.35,0.35))
+plotca(bd3,showcolumncrs=10:12,mcaoneploteach=FALSE)
 
 # Three plots, various colour schemes
 
-plotca(bd3,othersmonochrome="black",picsize=c(-0.35,0.35))
-plotca(bd3,othersmonochrome="black",picsize=c(-0.35,0.35),mcacategorycolours=TRUE)
-plotca(bd3,picsize=c(-0.35,0.35),mcavariablecolours=TRUE,likertarrows=TRUE)
+plotca(bd3,othersmonochrome="black")
+plotca(bd3,othersmonochrome="black",mcacategorycolours=TRUE)
+plotca(bd3,mcavariablecolours=TRUE,likertarrows=TRUE)
 
-# All on one plot, various colour schemes
+# All on one plot, various colour schemes, very busy
 
-plotca(bd3,mcaoneploteach=FALSE,showcolumncrs=1:5,othersmonochrome="black",picsize=c(-0.35,0.35))
-plotca(bd3,mcaoneploteach=FALSE,showcolumncrs=1:5,likertarrows=TRUE,picsize=c(-0.35,0.35))
-plotca(bd3,mcaoneploteach=FALSE,likertarrows=TRUE,mcacategorycolours=TRUE,picsize=c(-0.35,0.35))
-plotca(bd3,mcaoneploteach=FALSE,likertarrows=TRUE,mcavariablecolours=TRUE,picsize=c(-0.35,0.35))
+plotca(bd3,mcaoneploteach=FALSE,showcolumncrs=1:5,othersmonochrome="black")
+plotca(bd3,mcaoneploteach=FALSE,showcolumncrs=1:5,likertarrows=TRUE)
+plotca(bd3,mcaoneploteach=FALSE,likertarrows=TRUE,mcacategorycolours=TRUE)
+plotca(bd3,mcaoneploteach=FALSE,likertarrows=TRUE,mcavariablecolours=TRUE)
 
 # Plots with more complicated colour and grouping structure, as above but now in MCA case.
 # Note the need to duplicate both data frames as groupings must be specified for both rows
@@ -634,28 +747,18 @@ plotca(bd3,mcaoneploteach=FALSE,likertarrows=TRUE,mcavariablecolours=TRUE,picsiz
 groupingsframe <- cbind(1:12,c(1,1,2,2,3,4,4,5,5,6,7,7))
 groupingsframe <- rbind(groupingsframe,groupingsframe)
 grouplabframe <- cbind( 1:7, c("AB","CD","E","ab","cd","v1","v23"), 19:25,
-                        c("cyan","deepskyblue","blue","red","tomato","chartreuse","yellowgreen"),
+                        c("cyan","deepskyblue","blue","red","tomato","chartreuse","green"),
                         "T" )
 grouplabframe <- rbind(grouplabframe,grouplabframe)
 plotca(bd3, groupings=groupingsframe, grouplabels=grouplabframe,
-       mcaoneploteach=FALSE, picsize=c(-0.35,0.35))
+       mcaoneploteach=FALSE)
 
 
-# Comparing plots to those from ca()
+### Adding confidence ellipses to plots from ca package ca() and mjca() functions
 
-bd <- cabootcrs(DreamData, showresults=FALSE)
+## Simple CA
 
-# both plots almost the same as the plot from the ca() package
-
-plotca(bd, plottype="french", showrowcrs=FALSE, showcolumncrs=FALSE, othersmonochrome=NULL,
-       plotsymbolscolours=c(19,"blue",17,"red"), picsize=c(-0.4,0.4) )
-
-# plot almost the same as the ca() plot, but with ellipses
-
-plotca(bd, plottype="french", othersmonochrome=NULL, plotsymbolscolours=c(19,"blue",17,"red"),
-       picsize=c(-0.4,0.4))
-
-# Adding confidence ellipses for row points to plots from ca() using ellipse().
+# Adding confidence ellipses for row points to plots from ca() using ellipse()
 # Note: reflectaxes() is needed if cabootcrs() and ca() axes are reflected wrt each other
 
 library(ca)
@@ -667,6 +770,72 @@ for (i in 1:dim(DreamData)[1]) {
                  npoints=1000),
          cex=1, pch=".", col="blue")
 }
+
+# These plots can also be produced almost identically here
+
+bd <- cabootcrs(DreamData, showresults=FALSE)
+
+# both plots almost the same as the default plot from ca()
+
+plotca(bd, plottype="french", showrowcrs=FALSE, showcolumncrs=FALSE, othersmonochrome=NULL,
+       plotsymbolscolours=c(19,"blue",17,"red"), picsize=c(-0.5,0.6) )
+
+# plot almost the same as the ca() plot, but with ellipses added
+
+plotca(bd, plottype="french", othersmonochrome=NULL, plotsymbolscolours=c(19,"blue",17,"red"),
+       picsize=c(-0.5,0.6))
+
+
+## Multiple CA
+
+# Adding confidence ellipses for category points to plots from mjca() using ellipse()
+# Note that ca also uses standardised inertias and coordinates by default
+
+library(ca)
+library(ellipse)
+cad3 <- mjca(DreamData223by3)
+
+# Obtain covariance matrices, using same scalings and standardisations
+
+bd3 <- cabootcrs(DreamData223by3, catype="mca", showresults=FALSE)
+
+# Reflect axis 1 for consistency (may differ on other machines)
+
+bd3 <- reflectaxes(bd3,1)
+
+# Plot and then add ellipses for categories of variable 1 only
+
+plot(cad3)
+for (i in 1:bd3@Jk[1]) {
+  lines( ellipse(x=covmat(bd3,i,"column",1,2,FALSE), centre=bd3@Colprinccoord[i,cbind(1,2)],
+                 npoints=1000),
+         cex=1, pch=".", col="red")
+}
+
+# These plots can also be produced almost identically here
+
+plotca(bd3,picsize=c(-0.35,0.35), mcaoneploteach=FALSE, mcavariablecolours=TRUE,
+           showcolumncrs=FALSE)
+plotca(bd3,picsize=c(-0.35,0.35), mcaoneploteach=FALSE, plotsymbolscolours=c(17,"red"),
+           showcolumncrs=FALSE)
+plotca(bd3,picsize=c(-0.35,0.35), mcaoneploteach=FALSE, mcacategorycolours=TRUE,
+           showcolumncrs=1:5 )
+
+# Three separate plots with ellipses for one variable on each
+
+for (j in 1:length(bd3@Jk)) {
+  plot(cad3)
+  if (j==1) { firstcol <- 1 } else { firstcol <- cumsum(bd3@Jk)[j-1]+1 }
+  for (i in firstcol:cumsum(bd3@Jk)[j]) {
+    lines( ellipse(x=covmat(bd3,i,"column",1,2,FALSE), centre=bd3@Colprinccoord[i,cbind(1,2)],
+                   npoints=1000),
+           cex=1, pch=".", col="red")
+  }
+}
+
+# For comparison, default plot with one plot each showing the ellipses for each variable
+
+plotca(bd3,picsize=c(-0.35,0.35), mcacategorycolours=TRUE )
 
 }
 

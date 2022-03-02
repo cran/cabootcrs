@@ -4,12 +4,12 @@
 \alias{summaryca}
 \title{Prints brief 2-d results, with standard deviations}
 \usage{
-summaryca(x, datasetname = "", mcaprintindividuals = FALSE)
+summaryca(x, datasetname = NULL, mcaprintindividuals = FALSE)
 }
 \arguments{
 \item{x}{An object of class \code{\linkS4class{cabootcrsresults}}}
 
-\item{datasetname}{The name (in "") of the data set, to be used in the output}
+\item{datasetname}{The name (in "") of the data set, to be used in the output, defaults to that in cabootcrs object}
 
 \item{mcaprintindividuals}{If TRUE then print individual (row) point results in multiple
 correspondence analysis when using indicator or doubled matrix}

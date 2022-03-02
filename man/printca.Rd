@@ -4,12 +4,12 @@
 \alias{printca}
 \title{Prints reasonably full results, including variances}
 \usage{
-printca(x, datasetname = "")
+printca(x, datasetname = NULL)
 }
 \arguments{
 \item{x}{An object of class \code{\linkS4class{cabootcrsresults}}}
 
-\item{datasetname}{The name (in "") of the data set, to be used in the output}
+\item{datasetname}{The name (in "") of the data set, to be used in the output, defaults to name in cabootcrs object}
 }
 \value{
 Printed results, no plots or objects produced

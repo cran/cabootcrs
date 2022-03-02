@@ -40,10 +40,12 @@
 #' the average of the off-diagonal inertias (mcauseadjustinertiasum=FALSE, the default)
 #' as proposed by Greenacre.
 #' You can adjust (multiply by p) the Contribution figures in MCA so that they sum to p over all variables,
-#' i.e. an average of 1 for each variable as in SCA (mcaadjustmassctr=TRUE, the default),
-#' rather than a total of 1 over all variables, as usually in MCA (mcaadjustmassctr=FALSE).
+#' i.e. an average of 1 for each variable as in SCA (mcaadjustmassctr=TRUE),
+#' rather than a total of 1 over all variables, as usually in MCA (mcaadjustmassctr=FALSE, the default).
+#' Note that when p=2 this will be the same as in SCA, but when p>3 you can get contributions
+#' greater than 1, so use with caution.
 #' This also adjusts (multiplies by p) the point masses so that they sum to
-#' 1 for each variable, rather than over all variables.
+#' 1 for each variable, rather than over all variables, same caveat applies.
 #'
 #' The fundamental problem with MCA is that in a Burt matrix each diagonal element is the
 #' value of a variable category cross-classified with itself, so it is always equal
@@ -165,12 +167,12 @@
 #' The experimental method to construct ellipses for individuals in MCA always uses bootstrap critical values
 #'
 #' @param xobject Name of data object (data frame or similar class that can be coerced to data frame).\cr
-#' For simple CA (SCA) the default is contingency table format,
-#' recommended that rows >= columns as matrix will be transposed if columns > rows. \cr
+#' For simple CA (SCA) the default is contingency table format, recommended that rows >= columns. \cr
 #' For multiple CA (MCA) the default is an n individuals by p variables matrix of category values (numbers or text).
 #'
-#' @param datafile Name of a text file (in " ") containing the data, same defaults as xobject,
-#' ignored if xobject is non-null
+#' @param datafile Name of a text file (in " ") containing the data, same defaults as xobject, ignored if xobject is non-null
+#'
+#' @param datasetname A string to use as the name of the data set in the plots, defaults to name of xobject or datafile
 #'
 #' @param nboots Number of boostrap replicate matrices used, default and recommended minimum is 999,
 #' but 9999 is recommended if machine and data set size allows;
@@ -219,6 +221,8 @@
 #'
 #' @param grouplabels To be passed to the plot routine, see \code{\link{plotca}} for details
 #'
+#' @param varnames Character p-vector naming the variables, defaults to c("Rows","Columns") in sca
+#'
 #' @param plotsymbolscolours To be passed to the plot routine, see \code{\link{plotca}} for details
 #'
 #' @param othersmonochrome To be passed to the plot routine, see \code{\link{plotca}} for details
@@ -251,7 +255,7 @@
 #'   the same combination of categories, and the now first column contains the count for this combination,
 #'   so that the input matrix is n by p+1
 #'   (hence the name used here is a bit of a misnomer, but it emphasises the similarities to an n by p)}
-#' \item{"indicator"}{An n by sum-of-distict-variable-categories (i.e. sum of elements of Jk) indicator matrix}
+#' \item{"indicator"}{An n by sum-of-distinct-variable-categories (i.e. sum of elements of Jk) indicator matrix}
 #' }
 #'
 #' @param mcatype Format of data matrix analysed, only applies for MCA:
@@ -324,7 +328,8 @@
 #' \item{TRUE}{Multiply point masses and contributions by p so that they sum to p over all variables}
 #' \item{FALSE}{No adjustment}
 #' }
-#' If TRUE then when p=2 the CTR will agree with those from SCA
+#' If TRUE then when p=2 the CTR will agree with those from SCA,
+#' though when p>2 the contributions can be >1
 #'
 #' @param mcaoneploteach Parameter passed to \code{\link{plotca}} for MCA.\cr\cr
 #' A flag saying whether to produce one plot for each variable,
@@ -427,6 +432,16 @@
 #'
 #' \dontrun{
 #'
+#' # Same data set with a completely random three-category third variable added,
+#' # analysed with MCA but with standardisations which mimic SCA as much as possible
+#'
+#' bd3 <- cabootcrs(DreamData223by3, catype="mca")
+#'
+#' Explicitly stating what the rows and columns represent, often needed for a contingency table
+#'
+#' bd <- cabootcrs(DreamData, datasetname="Maxwell's dream data",
+#'                 varnames=c("What the rows are","What the columns are"))
+#'
 #' # Multiple CA (MCA) of 3 categorical variables with all defaults:
 #' # non-parametric resampling, Burt matrix analysed,
 #' # each variable has one plot with it in colour with CRs shown, other variables in monochrome.
@@ -511,8 +526,60 @@
 #' # Do not adjust inertias, coordinates or contributions
 #' # (if inertias are not adjusted then coordinates are also not adjusted)
 #'
-#' bd3unadj <- cabootcrs(DreamData223by3, catype="mca",
-#'                       mcaadjustinertias=FALSE, mcaadjustmassctr=FALSE)
+#' bd3unadj <- cabootcrs(DreamData223by3, catype="mca",mcaadjustinertias=FALSE)
+#'
+#' ## Comparisons to ellipses from FactoMineR
+#'
+#' # Generate some completely random uniform categorical data, construct ellipses.
+#' # The cabootcrs ellipses are very large and overlap extensively, as you would expect
+#' # from completely random data.
+#' # The FactoMineR ellipses are much smaller, often with minimal overlaps,
+#' # giving a completely false impression of genuine differences between categories.
+#'
+#' library(FactoMineR)
+#' p <- 4
+#' maxcat <- 5
+#' n <- 100
+#' Xnpr <- apply( as.data.frame( matrix( round(runif(n*p,0.5,maxcat+0.5)), n, p)), 2, factor )
+#' fr <- MCA(Xnpr, method="Burt")
+#' plotellipses(fr)
+#' br <- cabootcrs(Xnpr, catype="mca", showresults=FALSE)
+#' plotca(br, mcacategorycolours = TRUE, showcolumnlabels=FALSE)
+#'
+#' ## Comparisons to results in ca and FactoMineR
+#'
+#' Summary: If using unadjusted inertias, coordinates the packages produce identical results,
+#' apart from differences in presentation (rounding off, the naming of rep/cor/cos2).
+#'
+#' Summary: When using adjusted inertias and coordinates (not an option in FactoMineR::MCA)
+#' the correlations in ca::mjca no longer sum to 1 over all dimensions, in cabootcrs they do.
+#' Ratios are the same for each dimension, but not each point, they are standardised differently.
+#'
+#' # Example comparisons with random data
+#' library(FactoMineR)
+#' library(ca)
+#' p <- 4
+#' maxcat <- 5
+#' n <- 100
+#' Xnpdf <- as.data.frame( matrix( round(runif(n*p,0.5,maxcat+0.5)), n, p))
+#' Xnpr <- apply( Xnpdf, 2, factor )
+#'
+#' # Note that ca::mjca only accepts the data as numerical,
+#' # FactoMineR::MCA only acccepts the data as characters
+#' rbun <- cabootcrs(Xnpr, catype="mca", nboots=0, mcaadjustinertias = FALSE)
+#' rcun <-  mjca(Xnpdf,lambda="Burt")
+#' summary(rcun)
+#' rfm <- MCA(Xnpr,method="Burt", graph=FALSE)
+#' summary(rfm)
+#' rb <- cabootcrs(Xnpr, catype="mca", nboots=0)
+#' rc <- mjca(Xnpdf)
+#' summary(rc)
+#' realr <- rb@br@realr
+#' rb@ColREP[,1:realr]
+#' rc$colcor[,1:realr]
+#' apply(rb@ColREP[,1:realr],1,"sum")
+#' apply(rc$colcor[,1:realr],1,"sum")
+#'
 #' }
 #'
 #' @seealso \code{\link{cabootcrs-package}}, \code{\linkS4class{cabootcrsresults}},
@@ -520,6 +587,8 @@
 #' \code{\link{covmat}}, \code{\link{allvarscovs}}
 #'
 #' @import lpSolve
+#'
+#' @rawNamespace import(colorspace, except=plot)
 #'
 #' @import methods
 #'
@@ -533,16 +602,16 @@
 #'
 #' @export
 cabootcrs <- function(
-  xobject=NULL, datafile=NULL,
+  xobject=NULL, datafile=NULL, datasetname=NULL,
   nboots=999, resampledistn="Poisson", multinomialtype="whole",
   printdims=4, lastaxis=4,
   maxrearrange=6, rearrangemethod="lpassign", usebootcrits=TRUE,
-  groupings=NULL, grouplabels=NULL,
-  plotsymbolscolours=c(19,"alldifferent",18,"alldifferent"),
+  groupings=NULL, grouplabels=NULL, varnames=NULL,
+  plotsymbolscolours=c(19,"inferno",18,"inferno"),
   othersmonochrome="grey", crpercent=95,
   catype="sca", scainput="CT", mcainput="nbyp", mcatype="Burt",  mcavariant="mca",
   mcasupplementary="offdiag", mcaadjustinertias=TRUE, mcauseadjustinertiasum=FALSE,
-  mcaadjustcoords=TRUE, mcaadjustmassctr=TRUE,
+  mcaadjustcoords=TRUE, mcaadjustmassctr=FALSE,
   mcaoneploteach=TRUE, mcashowindividuals=FALSE,
   mcavariablecolours=FALSE, mcacategorycolours=FALSE,
   Jk=NULL, varandcat=TRUE, likertarrows=FALSE,
@@ -619,10 +688,11 @@ if (catype=="sca") {
 if (is.null(xobject)) { # data file
 
 Xtable <- read.table(file = datafile)
-if ((scainput=="CT")&(row.names(Xtable)[[1]]=="1")&(names(Xtable)[[1]]=="V1")) {
+if ((scainput=="CT")&(rownames(Xtable)[[1]]=="1")&(names(Xtable)[[1]]=="V1")) {
   for (i in 1:dim(Xtable)[1]) rownames(Xtable)[i] <- paste("r",i,sep="")
   for (i in 1:dim(Xtable)[2]) colnames(Xtable)[i] <- paste("c",i,sep="")
 }
+if (is.null(datasetname)) datasetname <- as.character(datafile)
 
 } else { # data object
 
@@ -630,39 +700,33 @@ if ((scainput=="CT")&(row.names(Xtable)[[1]]=="1")&(names(Xtable)[[1]]=="V1")) {
 # will undo the tabulation for no good reason, and as.array() does not work
 #if (class(xobject)=="table") {
 #  class(xobject) <- "array"
-#  cat("Note: input class has been changed from table to array so that\n as.data.frame will not undo the tabulation\n\n")
+#  cat("Note: input class has been changed from table to array so that as.data.frame will not undo the tabulation")
 #}
 
 Xtable <- as.data.frame.matrix(xobject) # seems to coerce to data frame without undoing table()
 if (scainput=="CT") {
-  if ((is.null(rownames(xobject)))|(row.names(Xtable)[[1]]=="1")) {
+  if ((is.null(rownames(xobject)))|(rownames(Xtable)[[1]]=="1")) {
     for (i in 1:dim(Xtable)[1]) rownames(Xtable)[i] <- paste("r",i,sep="")
   }
   if ((is.null(colnames(xobject)))|(names(Xtable)[[1]]=="V1")) {
     for (i in 1:dim(Xtable)[2]) colnames(Xtable)[i] <- paste("c",i,sep="")
   }
 }
+if (is.null(datasetname)) datasetname <- deparse(substitute(xobject))
 
 } # input file or object
 
 if (scainput=="CT") {
   X <- as.matrix(Xtable)
   p <- 2
-  if (dim(X)[1]>=dim(X)[2])  {
-    rowlabels <- rownames(Xtable)
-    collabels <- colnames(Xtable)
-    varnames <- c("rows","columns")
-  } else {
-    cat("Note: input data transposed so that rows > columns \n\n")
-    X <- t(X)
-    rowlabels <- colnames(Xtable)
-    collabels <- rownames(Xtable)
-    varnames <- c("rows","columns") # too confusing otherwise
-  }
+  needtrans <- dim(X)[1] < dim(X)[2]
+  rowlabels <- rownames(Xtable)
+  collabels <- colnames(Xtable)
+  if (is.null(varnames)) { varnames <- c("Rows","Columns") }
 } else { # n by p
   Xlist <- convert(Xtable)
   Xind <- Xlist$result
-  varnames <- Xlist$varnames
+  if (is.null(varnames)) { varnames <- Xlist$varnames }
   cats <- Xlist$catnames
   Jk <- Xlist$Jk
   p <- Xlist$p
@@ -684,8 +748,10 @@ if (catype=="mca") {
 
 if (is.null(xobject)) { # data file
   Xtable <- read.table(file = datafile)
+  if (is.null(datasetname)) datasetname <- as.character(datafile)
 } else { # data object
   Xtable <- as.data.frame(xobject)
+  if (is.null(datasetname)) datasetname <- deparse(substitute(xobject))
 }
 
 if ((mcainput=="nbypcounts")&(names(Xtable)[[1]]=="V1")&(names(Xtable)[[2]]=="V2")) {
@@ -699,7 +765,7 @@ if (any(mcainput==c("nbyp","nbypcounts"))) {
   }
   Xindlist <- convert(Xtable,input=mcainput,output="indicator",Jk=Jk,varandcat=varandcat)
   Xind <- Xindlist$result
-  varnames <- Xindlist$varnames
+  if (is.null(varnames)) { varnames <- Xindlist$varnames }
   cats <- Xindlist$catnames
   Jk <- Xindlist$Jk
   p <- Xindlist$p
@@ -720,8 +786,10 @@ if (mcainput=="indicator") {
   Xind <- as.matrix(Xtable)
   if (any(Xind>1)) stop(paste("Not an indicator matrix\n\n"))
   p <- length(Jk)
-  varnames <- character(p)
-  for (i in 1:p) varnames[i] <- paste("V",i,sep="")
+  if (is.null(varnames)) {
+    varnames <- character(p)
+    for (i in 1:p) varnames[i] <- paste("V",i,sep="")
+  }
   #cats <- vector("list", length=p)
   #for (k in 1:p) { cats[[k]] <- 1:Jk[k] }
   if (mcatype=="Burt") {
@@ -763,7 +831,7 @@ if (catype=="sca") {
   n <- sum(X)
 }
 
-S <- switch(catype, "sca"=sca(X), "mca"=sca(X,catype,mcatype,p) )
+S <- switch(catype, "sca"=sca(X,needtrans=needtrans), "mca"=sca(X,catype,mcatype,p) )
 
 # most axes for which variances can be calculated
 if ( (catype=="mca") & (mcatype=="Burt") & ( (mcasupplementary=="offdiag") | (mcaadjustinertias==TRUE) ) ) {
@@ -1011,6 +1079,10 @@ cbm1 <- ( 1/( colnB-1 + 2*(colnB<=1) ) ) * (1-(colnB<=1))
 
 RSBvar <- rbm1 * ( RSBsumsq - rownB * RSBmean * RSBmean )
 CSBvar <- cbm1 * ( CSBsumsq - colnB * CSBmean * CSBmean )
+
+rownames(RSBvar) <- rowlabels
+rownames(CSBvar) <- collabels
+
 if (axisvariances>1) {
 for (a1 in 1:(axisvariances-1)) {
   for (a2 in (a1+1):axisvariances) { # later axis gives effective sample size
@@ -1069,6 +1141,9 @@ for (i in 1:cols) {
 
 Fmat <- S@Rprofile %*% S@Rweights %*% S@Raxes
 Gmat <- S@Cprofile %*% S@Cweights %*% S@Caxes
+
+rownames(Fmat) <- rowlabels
+rownames(Gmat) <- collabels
 
 dmum1 <- diag( 1/(S@mu + (S@mu==0)) * (1-(S@mu==0)) )
 Gbi <- Gmat %*% dmum1
@@ -1135,6 +1210,15 @@ ColCTR <- dc %*% Gsq %*% dmum2
 Grs <- diag(1/rowSums(Gsq))
 ColREP <- Grs %*% Gsq
 
+if ( (catype=="mca")&(mcaadjustmassctr==TRUE) ) { massmult<-p } else { massmult<-1 }
+rowmasses <- massmult*1000*rowSums(X)/sum(X)
+colmasses <- massmult*1000*colSums(X)/sum(X)
+
+rownames(RowCTR) <- rowlabels
+rownames(RowREP) <- rowlabels
+rownames(ColCTR) <- collabels
+rownames(ColREP) <- collabels
+
 # If inertias and coords adjusted, and mcaadjustmassctr then total CTR should sum to p
 # if only inertias adjusted, use adjusted inertia for decomposition
 # Should agree with SCA for p=2
@@ -1146,12 +1230,12 @@ if ( (catype=="mca") & (mcaadjustinertias==TRUE) & (!(mcatype=="doubled")) ) { #
 }
 
 bootca <- new("cabootcrsresults", br=S,
-  DataMatrix=X, rows=rows, columns=cols,
+  DataMatrix=X, datasetname=datasetname, rows=rows, columns=cols,
   rowlabels=rowlabels, collabels=collabels, varnames=varnames,
   Rowprinccoord=Fmat, Colprinccoord=Gmat, Rowstdcoord=Fbi, Colstdcoord=Gbi,
   RowCTR=RowCTR, RowREP=RowREP, ColCTR=ColCTR, ColREP=ColREP,
   RowVar=RSBvar, RowCov=RSBcov, ColVar=CSBvar, ColCov=CSBcov,
-  inertiasum=inertiasum, inertias=inertias,
+  inertiasum=inertiasum, inertias=inertias, rowmasses=rowmasses, colmasses=colmasses,
   nboots=nboots, resampledistn=resampledistn,
   multinomialtype=multinomialtype, sameaxisorder=sameaxisorder,
   poissonzeronewmean=poissonzeronewmean, newzeroreset=newzeroreset,
@@ -1164,8 +1248,8 @@ bootca <- new("cabootcrsresults", br=S,
   mcaadjustcoords=mcaadjustcoords, mcaadjustmassctr=mcaadjustmassctr, mcasupplementary=mcasupplementary )
 
 if (showresults==TRUE) {
-summaryca(bootca, datasetname=as.character(datafile))
-plotca(bootca, datasetname=as.character(datafile),
+summaryca(bootca, datasetname=datasetname)
+plotca(bootca, datasetname=datasetname,
        groupings=groupings, grouplabels=grouplabels,
        plotsymbolscolours=plotsymbolscolours, picsize=NULL, likertarrows=likertarrows,
        othersmonochrome=othersmonochrome, crpercent=crpercent, usebootcrits=usebootcrits,

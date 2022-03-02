@@ -47,6 +47,8 @@ representation(
 #'
 #' @slot br The basic results from CA, class \code{\linkS4class{cabasicresults}}
 #'
+#' @slot datasetname Name of the data set for printing, class \code{"character"}
+#'
 #' @slot DataMatrix The sample data matrix, class \code{"matrix"}
 #'
 #' @slot rows Number of rows, class \code{"numeric"}
@@ -87,6 +89,10 @@ representation(
 #'
 #' @slot inertias Axis inertias, class \code{"matrix"}
 #'
+#' @slot rowmasses Masses of row points, class \code{"numeric"}
+#'
+#' @slot colmasses Masses of column points, class \code{"numeric"}
+#'
 #' @slot nboots Number of bootstrap replicates used to calculate the (co)variances, class \code{"numeric"}. \cr
 #' If nboots=0 then standard CA or MCA is performed with no confidence regions produced.
 #'
@@ -116,7 +122,7 @@ representation(
 #'
 #' @slot mcaindividualboot Whether the experimental method to bootstrap an indicator or doubled matrix was used, class \code{"logical"}
 #'
-#' @slot IndicatorMatrix The indicator matrix dervied from the data matrix, class \code{"matrix"}
+#' @slot IndicatorMatrix The indicator matrix derived from the data matrix, class \code{"matrix"}
 #'
 #' @slot Jk The number of classes for each variable, class \code{"numeric"}
 #'
@@ -140,13 +146,13 @@ representation(
 #' @export
 setClass("cabootcrsresults",
 representation(
-  br="cabasicresults",
+  br="cabasicresults", datasetname="character",
   DataMatrix="matrix", rows="numeric", columns="numeric",
   rowlabels="character", collabels="character", varnames="character",
   Rowprinccoord="matrix", Colprinccoord="matrix", Rowstdcoord="matrix", Colstdcoord="matrix",
   RowCTR="matrix", RowREP="matrix", ColCTR="matrix", ColREP="matrix",
   RowVar="matrix", RowCov="array", ColVar="matrix", ColCov="array",
-  inertiasum="numeric", inertias="matrix",
+  inertiasum="numeric", inertias="matrix", rowmasses="numeric", colmasses="numeric",
   nboots="numeric", resampledistn="character", multinomialtype="character",
   sameaxisorder="numeric",
   poissonzeronewmean="numeric", newzeroreset="numeric",
@@ -219,7 +225,7 @@ cat("\n")
 #'
 #' @param x An object of class \code{\linkS4class{cabootcrsresults}}
 #'
-#' @param datasetname The name (in "") of the data set, to be used in the output
+#' @param datasetname The name (in "") of the data set, to be used in the output, defaults to name in cabootcrs object
 #'
 #' @return Printed results, no plots or objects produced
 #'
@@ -231,7 +237,7 @@ cat("\n")
 #' \code{\linkS4class{cabootcrsresults}}
 #'
 #' @export
-printca <- function(x, datasetname="") {
+printca <- function(x, datasetname=NULL) {
 
 #setGeneric("print", function(x,...) standardGeneric("print") )
 #setMethod("print", signature(x="cabootcrsresults"),
@@ -247,13 +253,14 @@ printwithaxes <- function(res, thenames) {
 d <- min(x@printdims, x@br@realr)
 axnames <- character(length=d)
 for (i in 1:d) { axnames[i] <- paste(" Axis",i) }
+if (is.null(datasetname)) datasetname <- x@datasetname
 
 cat("\n    RESULTS for Correspondence Analysis:", datasetname, "\n\n")
 
 settingsinertias(x)
 
 if ( (x@catype=="sca") | ((x@catype=="mca")&(x@mcatype=="indicator")) ) {
-if (x@catype=="sca") { Things <- "Rows" } else { Things <- "Individuals" }
+if (x@catype=="sca") { Things <- x@varnames[1] } else { Things <- "Individuals" }
 if (x@catype=="sca") { Thing <- "Row" } else { Thing <- "Individual" }
 cat("\n", Things, "in principal coordinates\n\n")
 printwithaxes(data.frame(x@Rowprinccoord[ ,1:d], row.names=x@rowlabels), axnames)
@@ -263,7 +270,7 @@ cat("\n", Thing, "representations (per mil)\n\n")
 printwithaxes(data.frame(round(x@RowREP[ ,1:d]*1000), row.names=x@rowlabels), axnames)
 }
 
-if (x@catype=="sca") { Things <- "Columns" } else { Things <- "Variable categories" }
+if (x@catype=="sca") { Things <- x@varnames[2] } else { Things <- "Variable categories" }
 if (x@catype=="sca") { Thing <- "Column" } else { Thing <- "Variable category" }
 cat("\n", Things, "in principal coordinates\n\n")
 printwithaxes(data.frame(x@Colprinccoord[ ,1:d], row.names=x@collabels), axnames)
@@ -296,10 +303,10 @@ cat("\n")
 
 cat("\nEstimated variances and covariances\n\n")
 if (x@catype=="sca") {
-cat("Rows\n\n")
+cat(paste(x@varnames[1],"\n\n"))
 print(allvarscovs(x,"rows"),digits=4)
 }
-cat("\nColumns\n\n")
+cat(paste("\n",x@varnames[2],"\n\n"))
 print(allvarscovs(x,"columns"),digits=4)
 cat("\n\n")
 } # nboots>0
@@ -314,7 +321,7 @@ cat("\n\n")
 #'
 #' @param x An object of class \code{\linkS4class{cabootcrsresults}}
 #'
-#' @param datasetname The name (in "") of the data set, to be used in the output
+#' @param datasetname The name (in "") of the data set, to be used in the output, defaults to that in cabootcrs object
 #'
 #' @param mcaprintindividuals If TRUE then print individual (row) point results in multiple
 #' correspondence analysis when using indicator or doubled matrix
@@ -329,7 +336,7 @@ cat("\n\n")
 #' \code{\linkS4class{cabootcrsresults}}
 #'
 #' @export
-summaryca <- function(x, datasetname="", mcaprintindividuals=FALSE) {
+summaryca <- function(x, datasetname=NULL, mcaprintindividuals=FALSE) {
 
 #setGeneric("summary", function(x,...) standardGeneric("summary") )
 #setMethod("summary", signature(x="cabootcrsresults"),
@@ -339,6 +346,7 @@ colnames <- character(length=9)
 colnames <- c("  Axis 1","StDev","Rep","Ctr","  Axis 2","StDev","Rep","Ctr","  Mass","Quality")
 colnamesnosd <- character(length=7)
 colnamesnosd <- c("  Axis 1","Rep","Ctr","  Axis 2","Rep","Ctr","  Mass","Quality")
+if (is.null(datasetname)) datasetname <- x@datasetname
 
 cat("\n    SUMMARY RESULTS for Correspondence Analysis:", datasetname, "\n\n")
 
@@ -350,10 +358,8 @@ cat("Principal coords, std devs; rep and ctr (per mil); mass (per mil); 2-d rep 
 cat("Principal coords; rep and ctr (per mil); mass (per mil); 2-d rep (per mil)\n\n")
 }
 
-if ( (x@catype=="mca")&(x@mcaadjustmassctr==TRUE) ) { massmult<-x@p } else { massmult<-1 }
-
 if ( (x@catype=="sca") | ((x@catype=="mca")&(x@mcatype=="indicator")&(mcaprintindividuals==TRUE)) ) {
-if (x@catype=="sca") { cat("Rows: \n") } else { cat("Individuals: \n") }
+if (x@catype=="sca") { cat(paste(x@varnames[1],": \n")) } else { cat("Individuals: \n") }
 rop <- data.frame(
  round(x@Rowprinccoord[,1]*1000)/1000,
  round(sqrt(x@RowVar[,1])*1000)/1000,
@@ -363,7 +369,7 @@ rop <- data.frame(
  round(sqrt(x@RowVar[,2])*1000)/1000,
  round(x@RowREP[ ,2]*1000),
  round(x@RowCTR[ ,2]*1000),
- round(massmult*1000*rowSums(x@DataMatrix)/sum(x@DataMatrix)),
+ round(x@rowmasses),
  round(rowSums(x@RowREP[ ,1:2]*1000)), row.names=x@rowlabels )
 if (x@nboots==0) {
   rop <- rop[,c(1,3,4,5,7,8,9,10)]
@@ -375,7 +381,7 @@ print(rop,digits=3)
 cat("\n")
 } # print row output unless Burt
 
-if (x@catype=="sca") { cat("Columns: \n") } else { cat("Variables: \n") }
+if (x@catype=="sca") { cat(paste(x@varnames[2],": \n")) } else { cat("Variables: \n") }
 cop <- data.frame(
  round(x@Colprinccoord[,1]*1000)/1000,
  round(sqrt(x@ColVar[,1])*1000)/1000,
@@ -385,7 +391,7 @@ cop <- data.frame(
  round(sqrt(x@ColVar[,2])*1000)/1000,
  round(x@ColREP[ ,2]*1000),
  round(x@ColCTR[ ,2]*1000),
- round(massmult*1000*colSums(x@DataMatrix)/sum(x@DataMatrix)),
+ round(x@colmasses),
  round(rowSums(x@ColREP[ ,1:2]*1000)), row.names=x@collabels )
 if (x@nboots==0) {
   cop <- cop[,c(1,3,4,5,7,8,9,10)]
@@ -608,7 +614,8 @@ allV
 #' \code{reflectaxes} reflects the principal and standard coordinates
 #' of the axes chosen, and the appropriate covariances where needed
 #'
-#' This may be useful when comparing results between different data sets or from different packages
+#' This may be useful when comparing results between different data sets,
+#' or from different packages
 #'
 #' @param x An object of class \code{\linkS4class{cabootcrsresults}}
 #'
@@ -618,17 +625,32 @@ allV
 #'
 #' @examples
 #' results <- cabootcrs(DreamData)
-#' resultsreflectfirstaxis <- reflectaxes(results)
+#' resultsreflectfirstaxis <- reflectaxes(results, 1)
 #' summaryca(resultsreflectfirstaxis)
 #' plotca(resultsreflectfirstaxis)
 #'
-#' @seealso \code{\link{cabootcrs-package}}, \code{\link{cabootcrs}}, \code{\linkS4class{cabootcrsresults}}
+#' \dontrun{
+#'
+#' # Often needed when comparing results between different packages,
+#' # or same package on different machines,
+#' # or to allow ellipses from this package to be added to plots from other packages
+#'
+#' library(ca)
+#' cad3 <- mjca(DreamData223by3)
+#' bd3 <- cabootcrs(DreamData223by3, catype="mca")
+#' summary(cad3)
+#' bd3reflect1 <- reflectaxes(bd3,1)
+#' summaryca(bd3reflect1)
+#'
+#' }
+#'
+#' @seealso \code{\link{cabootcrs-package}}, \code{\link{cabootcrs}}, \code{\link{reordercategories}}, \code{\linkS4class{cabootcrsresults}}
 #'
 #' @export
 reflectaxes <- function(x, axes=c(1,2)) {
 
 refx <- x
-refmat <- diag(1,x@axisvariances,x@axisvariances)
+refmat <- diag(1,dim(x@Rowprinccoord)[[2]],dim(x@Rowprinccoord)[[2]])
 for (i in 1:length(axes) ) { refmat[axes[i],axes[i]] <- -1 }
 
 refx@Rowprinccoord <- refx@Rowprinccoord %*% refmat
@@ -645,6 +667,242 @@ for (i in 1:x@axisvariances) {
 } } } }
 
 refx
+
+}
+
+
+#' Reorder categories for chosen variable in MCA case only
+#'
+#' \code{reordercategories} reorders the principal and standard coordinates, CTR, REP,
+#' variances and covariances of the categories for a single MCA variable
+#'
+#' This may be useful when comparing results between different data sets or from different packages
+#'
+#' Note: does not reorder anything in the \code{\linkS4class{cabasicresults}}
+#' part of the \code{\linkS4class{cabootcrsresults}} object
+#'
+#' @param x An object of class \code{\linkS4class{cabootcrsresults}}
+#'
+#' @param varno The number of the variable to be reordered
+#'
+#' @param newcats A vector of length equal to the number of categories for this variable,
+#' giving the new order for the categories
+#' (e.g. c(4,1,2,3) means that the original 4th category is moved to first)
+#'
+#' @return An object of class \code{\linkS4class{cabootcrsresults}}
+#'
+#' @examples
+#' bd3 <- cabootcrs(DreamData223by3, catype="mca", nboots=0, showresults=FALSE)
+#' bd3reorderedvar2 <- reordercategories(bd3, 2, c(3,2,4,1))
+#' summaryca(bd3)
+#' summaryca(bd3reorderedvar2)
+#'
+#' \dontrun{
+#'
+#' # Can be used when comparing results in different packages,
+#' # or when adding ellipses from this package to output from others
+#'
+#' library(FactoMineR)
+#' library(ca)
+#' data(tea)
+#' # remove duplicated age variable
+#' teamod <- tea[,c(1:18,20:36)]
+#'
+#' # ca package uses standardised coordinates and inertias by default
+#' catea <- mjca(teamod)
+#' btea <- cabootcrs(teamod, catype="mca", showresults=FALSE, nboots=0, varandcat=FALSE)
+#'
+#' # FactoMineR package uses unstandardised coordinates and inertias by default
+#' fmtea <- MCA(teamod, method="Burt", graph=FALSE)
+#' bteaunstd <- cabootcrs(teamod, catype="mca", showresults=FALSE, nboots=0,
+#'                        mcaadjustinertias = FALSE, mcaadjustcoords = FALSE, varandcat=FALSE)
+#'
+#' summary(fmtea)
+#' summaryca(bteaunstd)
+#' summary(catea)
+#' summaryca(btea)
+#'
+#' # slight difference due to different orderings of categories for these two
+#' fmtea$var$coord / bteaunstd@Colprinccoord[,1:5]
+#' catea$colpcoord[,1:5] / btea@Colprinccoord[,1:5]
+#' fmtea$var$coord / catea$colpcoord[,1:5]
+#'
+#' # Variables 22 and 23, in columns 57-65, are the problem
+#' # The coordinates agree (apart from reflection) but the categories are in a different order
+#' fmtea$var$coord[57:65,1:3]
+#' bteaunstd@Colprinccoord[57:65,1:3]
+#'
+#' catea$colpcoord[57:65,1:3]
+#' btea@Colprinccoord[57:65,1:3]
+#'
+#' # Coordinates agree when categories reordered and axes reflected
+#' bteaunstdreord <- reordercategories(bteaunstd,22,c(2:5,1))
+#' bteaunstdreord <- reordercategories(bteaunstdreord,23,c(3,2,1,4))
+#' bteaunstdreordreflect <- reflectaxes(bteaunstdreord,c(1,4))
+#' fmtea$var$coord / bteaunstdreordreflect@Colprinccoord[,1:5]
+#'
+#' bteareord <- reordercategories(btea,22,c(2:5,1))
+#' bteareord <- reordercategories(bteareord,23,c(3,2,1,4))
+#' bteareordreflect <- reflectaxes(bteareord,c(2,5))
+#' catea$colpcoord[,1:5] / bteareordreflect@Colprinccoord[,1:5]
+#'
+#' }
+#'
+#' @seealso \code{\link{cabootcrs-package}}, \code{\link{cabootcrs}}, \code{\link{reflectaxes}}, \code{\linkS4class{cabootcrsresults}}
+#'
+#' @export
+reordercategories <- function(x, varno, newcats) {
+
+  if (!(x@catype=="mca"))
+    stop(paste("Only designed for MCA cases, in SCA just reorder the categories before analysis\n\n"))
+
+  reordx <- x
+  cats <- c(0,cumsum(x@Jk))
+  catf <- cats[varno]+1
+  catl <- cats[varno+1]
+  catstart <- cats[varno]
+
+  if (x@mcatype=="Burt") {
+    reordx@rowlabels[catf:catl] <- reordx@rowlabels[catstart+newcats]
+    reordx@rowmasses[catf:catl] <- reordx@rowmasses[catstart+newcats]
+    reordx@Rowprinccoord[catf:catl,] <- reordx@Rowprinccoord[catstart+newcats,]
+    reordx@Rowstdcoord[catf:catl,] <- reordx@Rowstdcoord[catstart+newcats,]
+    reordx@RowCTR[catf:catl,] <- reordx@RowCTR[catstart+newcats,]
+    reordx@RowREP[catf:catl,] <- reordx@RowREP[catstart+newcats,]
+    reordx@RowVar[catf:catl,] <- reordx@RowVar[catstart+newcats,]
+    reordx@RowCov[catf:catl,,] <- reordx@RowCov[catstart+newcats,,]
+    reordx@bootcritR[catf:catl,,,]  <- reordx@bootcritR[catstart+newcats,,,]
+
+    rownames(reordx@Rowprinccoord) <- reordx@rowlabels
+    rownames(reordx@Rowstdcoord) <- reordx@rowlabels
+    rownames(reordx@RowCTR) <- reordx@rowlabels
+    rownames(reordx@RowREP) <- reordx@rowlabels
+    rownames(reordx@RowVar) <- reordx@rowlabels
+  }
+
+  reordx@collabels[catf:catl] <- reordx@collabels[catstart+newcats]
+  reordx@colmasses[catf:catl] <- reordx@colmasses[catstart+newcats]
+  reordx@Colprinccoord[catf:catl,] <- reordx@Colprinccoord[catstart+newcats,]
+  reordx@Colstdcoord[catf:catl,] <- reordx@Colstdcoord[catstart+newcats,]
+  reordx@ColCTR[catf:catl,] <- reordx@ColCTR[catstart+newcats,]
+  reordx@ColREP[catf:catl,] <- reordx@ColREP[catstart+newcats,]
+  reordx@ColVar[catf:catl,] <- reordx@ColVar[catstart+newcats,]
+  reordx@ColCov[catf:catl,,] <- reordx@ColCov[catstart+newcats,,]
+  reordx@bootcritC[catf:catl,,,]  <- reordx@bootcritC[catstart+newcats,,,]
+
+  rownames(reordx@Colprinccoord) <- reordx@collabels
+  rownames(reordx@Colstdcoord) <- reordx@collabels
+  rownames(reordx@ColCTR) <- reordx@collabels
+  rownames(reordx@ColREP) <- reordx@collabels
+  rownames(reordx@ColVar) <- reordx@collabels
+
+  reordx
+
+}
+
+#' Calculate coordinates for supplementary points, with option to add to the currently selected plot.
+#'
+#' \code{addsupplementary} calculates principal coordinate values for supplementary rows or columns in SCA,
+#' or supplementary variables in MCA, then plots them on the current selected graph, which it assumes to be appropriate.
+#'
+#' To add supplementary rows in SCA, define the parameter supp as a data frame with one named row for each supplementary row
+#' and with the columns the same as in the original data.\cr
+#' If plotting the points, ensure that the plot for rows is selected.
+#'
+#' To add supplementary columns in SCA define the parameter supp as a data frame with one named row for each supplementary column
+#' and with the columns the same as the rows in the original data.\cr
+#' If plotting the points, ensure that the plot for columns is selected.
+#'
+#' To add supplementary variables in MCA define the parameter supp as a data frame with one column for each supplementary variable in
+#' individuals by variables format.
+#' Each row represents the same individual as the same row in the original data,
+#' and each entry is the category value for that supplementary variable.
+#' Hence the new columns should just look exactly like new columns in the 'nbyp' format.\cr
+#' If plotting the points, any of the standard plots is suitable.
+#'
+#' @param x An object of class \code{\linkS4class{cabootcrsresults}}
+#'
+#' @param supp A data frame in the format:\cr
+#' SCA supplementary rows: each row is a supplementary row category, the columns are the same as in the original data,
+#' each cell value is the cross-classified count.\cr
+#' SCA supplementary columns: each row is a supplementary column category, the columns are the same as the rows in the original data,
+#' each cell value is the cross-classified count.\cr
+#' MCA supplementary variables: each row is the same individual as in the original data, each column is a supplementary variable,
+#' each cell value is the category which that individual belongs to.
+#'
+#' @param thing Whether to calculate the supplementary principal coordinates for
+#' \describe{
+#' \item{"rows"}{rows, or}
+#' \item{"columns"}{columns}
+#' }
+#' Note that "rows" is only needed for supplementary rows in SCA.
+#'
+#' @param suppsymbol The plot symbol used for the supplementary points
+#'
+#' @param suppcolour The colour of the supplementary points and their labels
+#'
+#' @param plotsupp TRUE if you want the points plotted on the currently active graph, FALSE otherwise
+#'
+#' @param varandcat Flag for how to construct column names for supplementary variables in MCA:
+#' \describe{
+#' \item{TRUE}{if many variables have the same categories, e.g. Likert, column names will be varname:catname}
+#' \item{FALSE}{when variables have distinct categories, column names will just be category names}
+#' }
+#'
+#' @return A matrix containing the principal coordinates of the supplementary points
+#'
+#' @examples
+#' results <- cabootcrs(DreamData)
+#' # SCA case two supplementary columns, make sure that the Columns plot is active
+#' suppcols <- data.frame(rbind(c(5,3,6,8,12),c(1,7,3,1,5)))
+#' suppcolpc <- addsupplementary(results, suppcols)
+#' suppcolpc
+#'
+#' \dontrun{
+#' # SCA case one supplementary row, make sure that the Rows plot is active
+#' supprow <- data.frame(cbind(12,4,8,3),row.names="supprow")
+#' supprowpc <- addsupplementary(results, supprow, thing="rows")
+#' supprowpc
+#'
+#' # MCA case, one or two supplementary variables, plots the same on any of the usual plots
+#' results3 <- cabootcrs(DreamData223by3, catype="mca", varandcat=FALSE,
+#'                       datasetname="Dream data with extra random column")
+#' newsupcol <- c(rep(c(rep("s1",10),rep("s2",10),rep("s3",10)),8))[1:223]
+#' newsupcol2 <- c(rep(c(rep("t1",5),rep("t2",15),rep("t3",25),rep("t4",35)),5))[1:223]
+#' newsupcols <- cbind(newsupcol,newsupcol2)
+#' suppvarpc <- addsupplementary(results3, newsupcol, varandcat=FALSE)
+#' supp2varpc <- addsupplementary(results3, newsupcols, varandcat=FALSE)
+#' }
+#'
+#' @seealso \code{\link{cabootcrs-package}}, \code{\link{cabootcrs}}, \code{\link{plotca}}, \code{\linkS4class{cabootcrsresults}}
+#'
+#' @export
+addsupplementary <- function(x, supp, thing="columns", suppsymbol="*", suppcolour="blue", plotsupp=TRUE, varandcat=TRUE) {
+
+  if (x@catype=="mca") {
+    Zs <- getindicator(supp,varandcat=varandcat)
+    Z <- x@IndicatorMatrix
+    supp <- t(Zs) %*% Z
+  }
+  suppthing <- as.data.frame(supp)
+  supppt <- suppthing/rowSums(suppthing)
+  if (thing=="rows") {
+    supppc <- as.matrix(supppt) %*% x@br@Rweights %*% x@br@Raxes
+  } else {
+    supppc <- as.matrix(supppt) %*% x@br@Cweights %*% x@br@Caxes
+  }
+  if (plotsupp) {
+    cat(paste("Supplementary points added to currently active plot\n"))
+    points(supppc[,1], supppc[,2], pch=suppsymbol, col=suppcolour)
+    if (is.null(row.names(supppc))) {
+     ptlabels <- rep("new",dim(suppthing)[1])
+    } else {
+      ptlabels <- row.names(supppc)
+    }
+    text(supppc[,1], supppc[,2], labels=ptlabels, pos=4, cex=0.75, col=suppcolour )
+  }
+
+supppc
 
 }
 

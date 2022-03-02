@@ -156,14 +156,14 @@ convert <- function(Xinput,input="nbyp",output="indicator",Jk=NULL,maxcat=NULL,v
 
   if (input=="nbyp") {
 
-    if (is.numeric(Xinput[,1])) {
-      if (any(Xinput[,1]>9)) cat(paste("WARNING: should you be specifying \"nbypcounts\"?\n\n"))
+    Xnp <- as.matrix(Xinput)
+
+    if (is.numeric(Xnp[,1])) {
+      if (any(Xnp[,1]>9)) cat(paste("WARNING: should you be specifying \"nbypcounts\"?\n\n"))
     }
-    Xnp <- Xinput
     varnames <- colnames(Xnp)
     n <- dim(Xnp)[1]
     p <- dim(Xnp)[2]
-
   } # input n by p
 
   if (input=="indicator") {
@@ -239,9 +239,19 @@ convert <- function(Xinput,input="nbyp",output="indicator",Jk=NULL,maxcat=NULL,v
         }
       }
     } else {
-      for (k in 1:p) { for (j in 1:Jk[k]) {
-        colnames(Xind)[csjk[k]+j] <- paste("v",k,":",catnames[[k]][j],sep="")
-      } }
+      if (varandcat) {
+        for (k in 1:p) {
+          for (j in 1:Jk[k]) {
+            colnames(Xind)[csjk[k]+j] <- paste("v",k,":",catnames[[k]][j],sep="")
+          }
+        }
+      } else {
+        for (k in 1:p) {
+          for (j in 1:Jk[k]) {
+            colnames(Xind)[csjk[k]+j] <- catnames[[k]][j]
+          }
+        }
+      }
     }
     Xind <- as.matrix(Xind)
 

@@ -4,13 +4,15 @@
 \name{NishData}
 \alias{NishData}
 \title{Nishisato's Singapore data}
-\format{A matrix of 13 individuals by 4 variables each with 3 possible answers
+\format{
+A matrix of 13 individuals by 4 variables each with 3 possible answers
 \describe{
   \item{Age - a}{20-29 (1), 30-39 (2), 40+ (3)}
   \item{Children are less disciplined now - b}{Agree (1), Disagree (2), Can't tell (3)}
   \item{Children are less fortunate now - c}{Agree (1), Disagree (2), Can't tell (3)}
   \item{Religions should not be taught in school - d}{Agree (1), Disagree (2), Indifferent (3)}
-}}
+}
+}
 \source{
 Nishisato, S. (1994).
 \emph{Elements of Dual Scaling: An Introduction to Practical Data Analysis}.

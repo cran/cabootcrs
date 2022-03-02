@@ -4,7 +4,7 @@
 \alias{sca}
 \title{Performs standard Correspondence Analysis calculations}
 \usage{
-sca(X, catype = "sca", mcatype = NULL, p = 2)
+sca(X, catype = "sca", mcatype = NULL, p = 2, needtrans = FALSE)
 }
 \arguments{
 \item{X}{A data matrix with rows >= cols}
@@ -16,6 +16,8 @@ or "doubled" depending on the analysis required.\cr
 This affects the number of meaningful singular values, as does p below}
 
 \item{p}{Number of variables, only needed if catype="mca"}
+
+\item{needtrans}{TRUE if rows < columns so need to transpose in the routine}
 }
 \value{
 An object of class \code{\linkS4class{cabasicresults}}

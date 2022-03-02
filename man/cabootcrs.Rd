@@ -7,6 +7,7 @@
 cabootcrs(
   xobject = NULL,
   datafile = NULL,
+  datasetname = NULL,
   nboots = 999,
   resampledistn = "Poisson",
   multinomialtype = "whole",
@@ -17,7 +18,8 @@ cabootcrs(
   usebootcrits = TRUE,
   groupings = NULL,
   grouplabels = NULL,
-  plotsymbolscolours = c(19, "alldifferent", 18, "alldifferent"),
+  varnames = NULL,
+  plotsymbolscolours = c(19, "inferno", 18, "inferno"),
   othersmonochrome = "grey",
   crpercent = 95,
   catype = "sca",
@@ -29,7 +31,7 @@ cabootcrs(
   mcaadjustinertias = TRUE,
   mcauseadjustinertiasum = FALSE,
   mcaadjustcoords = TRUE,
-  mcaadjustmassctr = TRUE,
+  mcaadjustmassctr = FALSE,
   mcaoneploteach = TRUE,
   mcashowindividuals = FALSE,
   mcavariablecolours = FALSE,
@@ -50,12 +52,12 @@ cabootcrs(
 }
 \arguments{
 \item{xobject}{Name of data object (data frame or similar class that can be coerced to data frame).\cr
-For simple CA (SCA) the default is contingency table format,
-recommended that rows >= columns as matrix will be transposed if columns > rows. \cr
+For simple CA (SCA) the default is contingency table format, recommended that rows >= columns. \cr
 For multiple CA (MCA) the default is an n individuals by p variables matrix of category values (numbers or text).}
 
-\item{datafile}{Name of a text file (in " ") containing the data, same defaults as xobject,
-ignored if xobject is non-null}
+\item{datafile}{Name of a text file (in " ") containing the data, same defaults as xobject, ignored if xobject is non-null}
+
+\item{datasetname}{A string to use as the name of the data set in the plots, defaults to name of xobject or datafile}
 
 \item{nboots}{Number of boostrap replicate matrices used, default and recommended minimum is 999,
 but 9999 is recommended if machine and data set size allows;
@@ -103,6 +105,8 @@ Option is only included in case something weird goes wrong with lpSolve.}
 
 \item{grouplabels}{To be passed to the plot routine, see \code{\link{plotca}} for details}
 
+\item{varnames}{Character p-vector naming the variables, defaults to c("Rows","Columns") in sca}
+
 \item{plotsymbolscolours}{To be passed to the plot routine, see \code{\link{plotca}} for details}
 
 \item{othersmonochrome}{To be passed to the plot routine, see \code{\link{plotca}} for details}
@@ -135,7 +139,7 @@ Option is only included in case something weird goes wrong with lpSolve.}
   the same combination of categories, and the now first column contains the count for this combination,
   so that the input matrix is n by p+1
   (hence the name used here is a bit of a misnomer, but it emphasises the similarities to an n by p)}
-\item{"indicator"}{An n by sum-of-distict-variable-categories (i.e. sum of elements of Jk) indicator matrix}
+\item{"indicator"}{An n by sum-of-distinct-variable-categories (i.e. sum of elements of Jk) indicator matrix}
 }}
 
 \item{mcatype}{Format of data matrix analysed, only applies for MCA:
@@ -208,7 +212,8 @@ but not the inertias makes no sense}
 \item{TRUE}{Multiply point masses and contributions by p so that they sum to p over all variables}
 \item{FALSE}{No adjustment}
 }
-If TRUE then when p=2 the CTR will agree with those from SCA}
+If TRUE then when p=2 the CTR will agree with those from SCA,
+though when p>2 the contributions can be >1}
 
 \item{mcaoneploteach}{Parameter passed to \code{\link{plotca}} for MCA.\cr\cr
 A flag saying whether to produce one plot for each variable,
@@ -342,10 +347,12 @@ the sum of these adjusted inertias (mcauseadjustinertiasum=TRUE) as proposed by 
 the average of the off-diagonal inertias (mcauseadjustinertiasum=FALSE, the default)
 as proposed by Greenacre.
 You can adjust (multiply by p) the Contribution figures in MCA so that they sum to p over all variables,
-i.e. an average of 1 for each variable as in SCA (mcaadjustmassctr=TRUE, the default),
-rather than a total of 1 over all variables, as usually in MCA (mcaadjustmassctr=FALSE).
+i.e. an average of 1 for each variable as in SCA (mcaadjustmassctr=TRUE),
+rather than a total of 1 over all variables, as usually in MCA (mcaadjustmassctr=FALSE, the default).
+Note that when p=2 this will be the same as in SCA, but when p>3 you can get contributions
+greater than 1, so use with caution.
 This also adjusts (multiplies by p) the point masses so that they sum to
-1 for each variable, rather than over all variables.
+1 for each variable, rather than over all variables, same caveat applies.
 
 The fundamental problem with MCA is that in a Burt matrix each diagonal element is the
 value of a variable category cross-classified with itself, so it is always equal
@@ -477,6 +484,16 @@ bd <- cabootcrs(DreamData)
 
 \dontrun{
 
+# Same data set with a completely random three-category third variable added,
+# analysed with MCA but with standardisations which mimic SCA as much as possible
+
+bd3 <- cabootcrs(DreamData223by3, catype="mca")
+
+Explicitly stating what the rows and columns represent, often needed for a contingency table
+
+bd <- cabootcrs(DreamData, datasetname="Maxwell's dream data",
+                varnames=c("What the rows are","What the columns are"))
+
 # Multiple CA (MCA) of 3 categorical variables with all defaults:
 # non-parametric resampling, Burt matrix analysed,
 # each variable has one plot with it in colour with CRs shown, other variables in monochrome.
@@ -561,8 +578,60 @@ bd3b <- cabootcrs(DreamData223by3, catype="mca", resampledistn="balanced")
 # Do not adjust inertias, coordinates or contributions
 # (if inertias are not adjusted then coordinates are also not adjusted)
 
-bd3unadj <- cabootcrs(DreamData223by3, catype="mca",
-                      mcaadjustinertias=FALSE, mcaadjustmassctr=FALSE)
+bd3unadj <- cabootcrs(DreamData223by3, catype="mca",mcaadjustinertias=FALSE)
+
+## Comparisons to ellipses from FactoMineR
+
+# Generate some completely random uniform categorical data, construct ellipses.
+# The cabootcrs ellipses are very large and overlap extensively, as you would expect
+# from completely random data.
+# The FactoMineR ellipses are much smaller, often with minimal overlaps,
+# giving a completely false impression of genuine differences between categories.
+
+library(FactoMineR)
+p <- 4
+maxcat <- 5
+n <- 100
+Xnpr <- apply( as.data.frame( matrix( round(runif(n*p,0.5,maxcat+0.5)), n, p)), 2, factor )
+fr <- MCA(Xnpr, method="Burt")
+plotellipses(fr)
+br <- cabootcrs(Xnpr, catype="mca", showresults=FALSE)
+plotca(br, mcacategorycolours = TRUE, showcolumnlabels=FALSE)
+
+## Comparisons to results in ca and FactoMineR
+
+Summary: If using unadjusted inertias, coordinates the packages produce identical results,
+apart from differences in presentation (rounding off, the naming of rep/cor/cos2).
+
+Summary: When using adjusted inertias and coordinates (not an option in FactoMineR::MCA)
+the correlations in ca::mjca no longer sum to 1 over all dimensions, in cabootcrs they do.
+Ratios are the same for each dimension, but not each point, they are standardised differently.
+
+# Example comparisons with random data
+library(FactoMineR)
+library(ca)
+p <- 4
+maxcat <- 5
+n <- 100
+Xnpdf <- as.data.frame( matrix( round(runif(n*p,0.5,maxcat+0.5)), n, p))
+Xnpr <- apply( Xnpdf, 2, factor )
+
+# Note that ca::mjca only accepts the data as numerical,
+# FactoMineR::MCA only acccepts the data as characters
+rbun <- cabootcrs(Xnpr, catype="mca", nboots=0, mcaadjustinertias = FALSE)
+rcun <-  mjca(Xnpdf,lambda="Burt")
+summary(rcun)
+rfm <- MCA(Xnpr,method="Burt", graph=FALSE)
+summary(rfm)
+rb <- cabootcrs(Xnpr, catype="mca", nboots=0)
+rc <- mjca(Xnpdf)
+summary(rc)
+realr <- rb@br@realr
+rb@ColREP[,1:realr]
+rc$colcor[,1:realr]
+apply(rb@ColREP[,1:realr],1,"sum")
+apply(rc$colcor[,1:realr],1,"sum")
+
 }
 
 }
